@@ -73,8 +73,8 @@ AudioFileLib {
         var l;
         if(library.isEmpty.not) {
             l = List[];
-            library.keysDo(l.add(_));
-            ^l;
+            library.collect(l.add(_));
+            ^l.flat;
         } {
             "No files in library.".postln;
         }
