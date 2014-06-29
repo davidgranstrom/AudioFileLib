@@ -1,6 +1,6 @@
 // =============================================================================
 // Title         : AudioFileLib
-// Description   : Audio file library
+// Description   : Store and load audio file libraries from disk.
 // Copyright (c) : David Granstrom 2014 
 // =============================================================================
 
@@ -36,7 +36,7 @@ AudioFileLib {
     }
 
     save {|path|
-        var stamp = "diflib_" ++ Date.getDate.stamp;
+        var stamp = "audiofilelib_" ++ Date.getDate.stamp;
         path = path ?? { Platform.userAppSupportDir +/+ stamp }; 
         try { library.writeArchive(path) } {
             "Could not write file to %.\nCheck your disk permissions.".format(path).throw;
