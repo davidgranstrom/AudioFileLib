@@ -9,18 +9,21 @@ AudioFileLib {
     var <library;
 
     *new {|path|
-        ^super.new.init(path);
+        ^super.new.initWithPath(path);
     }
 
-    *newFromFile {|file|
-        var d = AudioFileLib.new;
-        d.load(file);
-        ^d;
+    *newFromFile {|path|
+        ^super.new.initWithFile(path);
     }
 
-    init {|path|
+    initWithPath {|path|
         library = ();
         this.populateLibrary(PathName(path));
+    }
+
+    initWithFile {|path|
+        library = ();
+        this.load(path);
     }
 
     load {|path|
@@ -40,12 +43,6 @@ AudioFileLib {
         };
         "Saved library to %\n.".postf(path);
     }
-
-    // open {
-    //     Dialog.openPanel({|path|
-    //         path.do(this.add(_));
-    //     }, multipleSelection:true);
-    // }
 
     populateLibrary {|pn, parentPath|
         var result, ext;
