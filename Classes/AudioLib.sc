@@ -83,14 +83,16 @@ AudioFileLib {
     print {
         if(library.isEmpty.not) {
             library.keysValuesDo {|key, val| 
-                "o- NAME: \"%\"\n".postf(key);
-                val.asSortedArray.do {|x|
-                    if(x[0] == 'duration') {
-                        x[1] = x[1].asTimeString;
-                    };
-                    "|_ %: %\n".postf(x[0], x[1]);
+                Post << key << "\n" << "\n";
+                val.do {|x|
+                    var dur;
+                    x.openRead; // open the SoundFile so we can read the duration
+                    Post << "\t" << "File name   : " << PathName(x.path).fileName << "\n"
+                    << "\t" << "Channels    : " << x.numChannels << "\n"
+                    << "\t" << "Sample Rate : " << x.sampleRate << "\n"
+                    << "\t" << "Duration    : " << x.duration.asTimeString << "\n" << "\n";
+                    x.close;
                 };
-                Post << Char.nl;
             }
         } {
             "No files in library.".postln;
