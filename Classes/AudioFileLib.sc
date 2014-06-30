@@ -85,14 +85,16 @@ AudioFileLib {
             library.keysValuesDo {|key, val| 
                 Post << key << "\n" << "\n";
                 val.do {|x|
-                    var dur;
-                    x.openRead; // open the SoundFile so we can read the duration
+                    var dur, wasOpen = false;
+                    // open the SoundFile so we can read the duration
+                    if(x.isOpen.not) { x.openRead } { wasOpen = true };
                     Post << "\t" << "File name   : " << PathName(x.path).fileName << "\n"
                     << "\t" << "Channels    : " << x.numChannels << "\n"
                     << "\t" << "Sample Rate : " << x.sampleRate << "\n"
                     << "\t" << "Duration    : " << x.duration.asTimeString << "\n" << "\n";
-                    x.close;
-                };
+                    // maybe close the SoundFile
+                    if(x.isOpen and:{wasOpen.not}) { x.close };
+                }
             }
         } {
             "No files in library.".postln;
