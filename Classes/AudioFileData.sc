@@ -60,7 +60,7 @@ AudioFileData {
         var wsig, sig = floatArray;
         var slope, fadeIn, fadeOut;
         var fadeFrames, fadeFrames1;
-        var len, segment, xfade, loopedSig, loop, numIterations;
+        var len, segment, xfade, loop, numIterations;
         // length of crossfade
         fadeFrames  = (xfadeDur * sr).floor.asInt;
         fadeFrames1 = fadeFrames - 1;
@@ -79,9 +79,9 @@ AudioFileData {
         // see how many times we need to loop
         len = endFrame - startFrame;
         numIterations = (wsig.size / len).reciprocal.roundUp(1).asInt;
-        loop          = xfade ++ segment;
-        numIterations.do { loopedSig = loop ++ loop };
-        ^loopedSig.as(FloatArray);
+        loop = xfade ++ segment;
+        numIterations.do { loop = loop ++ loop };
+        ^loop.as(FloatArray);
     }
 
     cleanup {
