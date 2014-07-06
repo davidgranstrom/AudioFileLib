@@ -12,16 +12,9 @@ AudioFileData {
         if(sf.isOpen.not) { sf.openRead } { wasOpen = true };
     }
 
-    calcFrames {|n|
-        ^(n * sf.sampleRate * sf.numChannels).floor.asInt;
-    }
-
     getRandomChunk {|duration, offset=0, numChannels|
-        var start, eof, ofx;
-        start = this.calcFrames(offset);
-        eof   = (sf.numFrames * sf.numChannels).asInt;
-        ofx   = rrand(offset, eof - 1);
-        ^this.getChunk(duration, ofx, numChannels);
+        var start = rrand(offset, sf.duration);
+        ^this.getChunk(duration, start, numChannels);
     }
 
     getChunk {|duration, offset=0, numChannels|
@@ -33,6 +26,7 @@ AudioFileData {
         // convert duration to frames
         framesToRead  = (duration * sf.sampleRate).floor.asInt;
         framesToIndex = (duration * sf.sampleRate * sf.numChannels).floor.asInt;
+        offset        = (offset * sf.sampleRate * sf.numChannels).floor.asInt;
         // calculate positions
         end = offset + framesToIndex;
         len = sf.numFrames * sf.numChannels;
