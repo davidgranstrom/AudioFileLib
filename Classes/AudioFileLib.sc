@@ -80,6 +80,13 @@ AudioFileLib {
         }
     }
 
+    find {|str|
+        ^this.files.collect {|sf|
+            var path = PathName(sf.path);
+            if(path.fileName.containsi(str)) { sf }  
+        }.reject {|x| x.isNil };
+    }
+
     print {
         if(library.isEmpty.not) {
             library.keysValuesDo {|key, val| 
