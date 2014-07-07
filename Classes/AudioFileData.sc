@@ -61,10 +61,14 @@ AudioFileData {
             buf = Buffer.readChannel(server, sf.path, offsetToRead, framesToRead, channels:channelsToRead);
         };
         server.sync;
-        if(fadeTime > 0) {
-            buf.loadToFloatArray(action:{|a| rawData = this.applyWindow(a, fadeTime, sf.sampleRate, numChannels) });
-            server.sync;
-            buf = Buffer.loadCollection(server, rawData, numChannels);
+        if(fadeTime > 0 ) {
+            if(fadeTime <= ((buf.numFrames*buf.numChannels)/buf.sampleRate)) {
+                buf.loadToFloatArray(action:{|a| rawData = this.applyWindow(a, fadeTime, sf.sampleRate, numChannels) });
+                server.sync;
+                buf = Buffer.loadCollectionWithSampleRate(server, rawData, numChannels, sf.sampleRate);
+            } {
+                "'fadeTime' needs to be less than or equal to chunk duration. No window was applied.".warn;
+            }
         };
         this.close;
         ^buf;
