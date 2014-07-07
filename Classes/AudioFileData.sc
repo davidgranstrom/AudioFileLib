@@ -12,13 +12,13 @@ AudioFileData {
         this.open;
     }
 
-    getRandomChunk {|duration, offset=0, numChannels|
+    getRandomChunk {|duration, offset=0, numChannels, fadeTime=0|
         var start;
         this.open;
-        ^this.getChunk(duration, rrand(offset, sf.duration), numChannels);
+        ^this.getChunk(duration, rrand(offset, sf.duration), numChannels, fadeTime);
     }
 
-    getChunk {|duration, offset=0, numChannels|
+    getChunk {|duration, offset=0, numChannels, fadeTime=0|
         var buf, end, len;
         var rawData, rawData1, tmpPath, tmpSf;
         var framesToRead, framesToIndex, channelsToRead, offsetToRead, offsetToIndex;
@@ -61,6 +61,11 @@ AudioFileData {
             buf = Buffer.readChannel(server, sf.path, offsetToRead, framesToRead, channels:channelsToRead);
         };
         server.sync;
+        if(fadeTime > 0) {
+            buf.loadToFloatArray(action:{|a| rawData = this.applyWindow(a, fadeTime, sf.sampleRate, numChannels) });
+            server.sync;
+            buf = Buffer.loadCollection(server, rawData, numChannels);
+        };
         this.close;
         ^buf;
     }
@@ -92,6 +97,21 @@ AudioFileData {
         loop = xfade ++ segment;
         numIterations.do { loop = loop ++ loop };
         ^loop.as(FloatArray);
+    }
+
+    applyWindow {|floatArray, duration, sampleRate, numChannels|
+        var win, fadeFrames, fadeFrames1, fadeIn, fadeOut, len;
+        fadeFrames = duration * sampleRate * numChannels;
+        win        = Signal.hanningWindow(2*fadeFrames);
+        fadeIn     = win[..(fadeFrames-1)];
+        fadeOut    = win[fadeFrames..];
+        len        = floatArray.size;
+        fadeIn.do  {|x,i| floatArray[i] = x * floatArray[i] };
+        fadeOut.do {|x,i| 
+            var offset = (len-1) - (fadeFrames-1);
+            floatArray[offset+i] = x * floatArray[offset+i] 
+        };
+        ^floatArray;
     }
 
     open {
