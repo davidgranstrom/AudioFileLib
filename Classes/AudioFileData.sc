@@ -9,7 +9,7 @@ AudioFileData {
 
     init {
         wasOpen = false;
-        if(sf.isOpen.not) { sf.openRead } { wasOpen = true };
+        this.open;
     }
 
     getRandomChunk {|duration, offset=0, numChannels|
@@ -78,7 +78,11 @@ AudioFileData {
         ^loop.as(FloatArray);
     }
 
-    cleanup {
+    open {
+        if(sf.isOpen.not) { sf.openRead } { wasOpen = true };
+    }
+
+    close {
         if(sf.isOpen and:{wasOpen.not}) { sf.close; wasOpen = false; };
     }
 }
