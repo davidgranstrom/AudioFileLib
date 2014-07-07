@@ -20,33 +20,48 @@ AudioFileData {
 
     getChunk {|duration, offset=0, numChannels|
         var buf, end, len;
-        var rawData, rawData1;
-        var framesToRead, framesToIndex, channelsToRead;
+        var rawData, rawData1, tmpPath, tmpSf;
+        var framesToRead, framesToIndex, channelsToRead, offsetToRead;
+        this.open;
         // read number of channels from file if not told otherwise
-        numChannels = numChannels ? sf.numChannels;
+        numChannels    = numChannels ? sf.numChannels;
+        channelsToRead = numChannels.collect{|x| x };
         // convert duration to frames
-        framesToRead  = (duration * sf.sampleRate).floor.asInt;
-        framesToIndex = (duration * sf.sampleRate * sf.numChannels).floor.asInt;
-        offset        = (offset * sf.sampleRate * sf.numChannels).floor.asInt;
+        framesToRead   = (duration * sf.sampleRate * numChannels).floor.asInt;
+        framesToIndex  = (duration * sf.sampleRate * sf.numChannels).floor.asInt;
+        offsetToRead   = (offset * sf.sampleRate * numChannels).floor.asInt;
+        offset         = (offset * sf.sampleRate * sf.numChannels).floor.asInt;
         // calculate positions
         end = offset + framesToIndex;
         len = sf.numFrames * sf.numChannels;
         // wrap around the file if duration goes above len
-        if(framesToIndex > len or:{end > len}) {
+        if(framesToIndex > len or:{end >= len}) {
             rawData = FloatArray.newClear(len);
             sf.readData(rawData);
             rawData1 = this.concatenateData(rawData, sf.sampleRate, offset, end);
             rawData1 = rawData1[offset..(end-1)];
-            if(server == Server.local) {
-                buf = Buffer.loadCollection(server, rawData1, numChannels);
+            tmpPath  = PathName.tmp ++ sf.hash.asString;
+            tmpSf    = SoundFile();
+            tmpSf.sampleRate  = sf.sampleRate;
+            tmpSf.numChannels = sf.numChannels;
+            // write the looped chunk data
+            if(tmpSf.openWrite(tmpPath)) {
+                tmpSf.writeData(rawData1);
+                tmpSf.close;
+                buf = Buffer.readChannel(server, tmpPath, 0, -1, channels:channelsToRead, action:{|b|
+                    if(File.delete(tmpPath).not) { 
+                        ("Could not delete tmp file:" + tmpPath).warn 
+                    };
+                });
             } {
-                buf = Buffer.sendCollection(server, rawData1, numChannels, wait: -1);
+                ("Failed to write data to tmp file:" + tmpPath).warn;
             };
         } {
             channelsToRead = numChannels.collect{|x| x };
-            buf = Buffer.readChannel(server, sf.path, offset, framesToRead, channels:channelsToRead);
+            buf = Buffer.readChannel(server, sf.path, offsetToRead, framesToRead, channels:channelsToRead);
         };
-        this.cleanup;
+        server.sync;
+        this.close;
         ^buf;
     }
 
