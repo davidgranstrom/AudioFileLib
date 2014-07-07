@@ -54,7 +54,7 @@ AudioFileData {
                     };
                 });
             } {
-                ("Failed to write data to tmp file:" + tmpPath).warn;
+                ("Failed to write header of tmp file:" + tmpPath).warn;
             };
         } {
             channelsToRead = numChannels.collect{|x| x };
