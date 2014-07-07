@@ -38,7 +38,7 @@ AudioFileData {
         if(framesToIndex > len or:{end >= len}) {
             rawData = FloatArray.newClear(len);
             sf.readData(rawData);
-            rawData1 = this.concatenateData(rawData, sf.sampleRate, offsetToIndex, end);
+            rawData1 = this.concatenateData(rawData, sf.sampleRate, numChannels, framesToIndex);
             rawData1 = rawData1[offsetToIndex..(end-1)];
             tmpPath  = PathName.tmp ++ sf.hash.asString;
             tmpSf    = SoundFile();
@@ -74,30 +74,21 @@ AudioFileData {
         ^buf;
     }
 
-    concatenateData {|floatArray, sr, startFrame, endFrame|
-        var xfadeDur  = 1/20;
-        var wsig, sig = floatArray;
-        var slope, fadeIn, fadeOut;
-        var fadeFrames, fadeFrames1;
-        var len, segment, xfade, loop, numIterations;
+    concatenateData {|floatArray, sampleRate, numChannels, numFrames|
+        var xfadeDur = 1/20;
+        var fadeFrames, rawData, rawSize;
+        var segment, xfade, loop, numIterations;
         // length of crossfade
-        fadeFrames  = (xfadeDur * sr).floor.asInt;
-        fadeFrames1 = fadeFrames - 1;
-        // we only need to calculate the slopes of the window
-        slope   = fadeFrames.collect {|i| cos((i/(fadeFrames1)) * pi).madd(0.5,0.5) };
-        fadeIn  = ((-1*slope)+1);
-        fadeOut = slope;
-        wsig    = sig;
+        fadeFrames  = (xfadeDur * sampleRate * numChannels).floor.asInt;
         // apply window
-        sig[..fadeFrames1].do {|smp,i| wsig[i] = smp * fadeIn[i] }; 
-        sig[((sig.size-1)-fadeFrames1)..].do {|smp,i| wsig[i + ((sig.size-1)-fadeFrames1)] = smp * fadeOut[i] }; 
+        rawData = this.applyWindow(floatArray, xfadeDur, sampleRate, numChannels);
+        rawSize = rawData.size;
         // calculate crossfade
-        xfade   = wsig[..fadeFrames1] + wsig[((wsig.size-1) - fadeFrames1)..];
+        xfade = rawData[..(fadeFrames-1)] + rawData[((rawSize-1) - (fadeFrames-1))..];
         // signal w/o fades
-        segment = wsig[fadeFrames..((wsig.size-1) - fadeFrames)];
+        segment = rawData[fadeFrames..((rawSize-1) - fadeFrames)];
         // see how many times we need to loop
-        len = endFrame - startFrame;
-        numIterations = (wsig.size / len).reciprocal.roundUp(1).asInt;
+        numIterations = (rawSize / numFrames).reciprocal.roundUp(1).asInt;
         loop = xfade ++ segment;
         numIterations.do { loop = loop ++ loop };
         ^loop.as(FloatArray);
@@ -105,7 +96,7 @@ AudioFileData {
 
     applyWindow {|floatArray, duration, sampleRate, numChannels|
         var win, fadeFrames, fadeFrames1, fadeIn, fadeOut, len;
-        fadeFrames = duration * sampleRate * numChannels;
+        fadeFrames = (duration * sampleRate * numChannels).floor.asInt;
         win        = Signal.hanningWindow(2*fadeFrames);
         fadeIn     = win[..(fadeFrames-1)];
         fadeOut    = win[fadeFrames..];
