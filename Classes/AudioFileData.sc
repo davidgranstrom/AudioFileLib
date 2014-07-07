@@ -21,7 +21,7 @@ AudioFileData {
     getChunk {|duration, offset=0, numChannels|
         var buf, end, len;
         var rawData, rawData1, tmpPath, tmpSf;
-        var framesToRead, framesToIndex, channelsToRead, offsetToRead;
+        var framesToRead, framesToIndex, channelsToRead, offsetToRead, offsetToIndex;
         this.open;
         // read number of channels from file if not told otherwise
         numChannels    = numChannels ? sf.numChannels;
@@ -30,16 +30,16 @@ AudioFileData {
         framesToRead   = (duration * sf.sampleRate * numChannels).floor.asInt;
         framesToIndex  = (duration * sf.sampleRate * sf.numChannels).floor.asInt;
         offsetToRead   = (offset * sf.sampleRate * numChannels).floor.asInt;
-        offset         = (offset * sf.sampleRate * sf.numChannels).floor.asInt;
+        offsetToIndex  = (offset * sf.sampleRate * sf.numChannels).floor.asInt;
         // calculate positions
-        end = offset + framesToIndex;
+        end = offsetToIndex + framesToIndex;
         len = sf.numFrames * sf.numChannels;
         // wrap around the file if duration goes above len
         if(framesToIndex > len or:{end >= len}) {
             rawData = FloatArray.newClear(len);
             sf.readData(rawData);
-            rawData1 = this.concatenateData(rawData, sf.sampleRate, offset, end);
-            rawData1 = rawData1[offset..(end-1)];
+            rawData1 = this.concatenateData(rawData, sf.sampleRate, offsetToIndex, end);
+            rawData1 = rawData1[offsetToIndex..(end-1)];
             tmpPath  = PathName.tmp ++ sf.hash.asString;
             tmpSf    = SoundFile();
             tmpSf.sampleRate  = sf.sampleRate;
