@@ -13,7 +13,6 @@ AudioFileData {
     }
 
     getRandomChunk {|duration, offset=0, numChannels, fadeTime=0|
-        var start;
         this.open;
         ^this.getChunk(duration, rrand(offset, sf.duration), numChannels, fadeTime);
     }
