@@ -74,7 +74,7 @@ AudioFileData {
     }
 
     concatenateData {|floatArray, sampleRate, numChannels, numFrames|
-        var xfadeDur = 1/20;
+        var xfadeDur = 0.02; // 20ms xfade
         var fadeFrames, rawData, rawSize;
         var segment, xfade, loop, numIterations;
         // length of crossfade
