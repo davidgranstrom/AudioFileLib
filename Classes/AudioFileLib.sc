@@ -106,7 +106,7 @@ AudioFileLib {
             library.collect(l.add(_));
             ^l.flat;
         } {
-            "No files in library.".postln;
+            "No files in library.".warn;
         }
     }
 
@@ -129,7 +129,7 @@ AudioFileLib {
                 }
             }
         } {
-            "No files in library.".postln;
+            "No files in library.".warn;
         }
     }
 
