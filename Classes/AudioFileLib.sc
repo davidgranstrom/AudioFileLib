@@ -89,12 +89,13 @@ AudioFileLib {
         ext    = f.extension;
         result = validExtensions.containsi(ext);
         if(result) {
-            sf = SoundFile(f.absolutePath);
+            sf = SoundFile.openRead(f.absolutePath);
             library[key].add(sf);
             libraryWithFileNames[key].put(
                 f.fileNameWithoutExtension.asSymbol,
                 sf
             );
+            sf.close;
         }
     }
 
@@ -121,15 +122,10 @@ AudioFileLib {
             library.keysValuesDo {|key, val| 
                 Post << key << "\n" << "\n";
                 val.do {|x|
-                    var dur, wasOpen = false;
-                    // open the SoundFile so we can read the duration
-                    if(x.isOpen.not) { x.openRead } { wasOpen = true };
                     Post << "\t" << "File name   : " << PathName(x.path).fileName << "\n"
                     << "\t" << "Channels    : " << x.numChannels << "\n"
                     << "\t" << "Sample Rate : " << x.sampleRate << "\n"
                     << "\t" << "Duration    : " << x.duration.asTimeString << "\n" << "\n";
-                    // maybe close the SoundFile
-                    if(x.isOpen and:{wasOpen.not}) { x.close };
                 }
             }
         } {
