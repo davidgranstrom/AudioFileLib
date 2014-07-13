@@ -135,5 +135,6 @@ AudioFileLib {
 
     purge {
         library = ();
+        libraryWithFileNames = ();
     }
 }
