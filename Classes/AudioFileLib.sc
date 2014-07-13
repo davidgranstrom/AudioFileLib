@@ -6,7 +6,7 @@
 
 AudioFileLib {
 
-    var <library;
+    var <library, <libraryWithFileNames;
 
     *new {|path|
         ^super.new.initWithPath(path);
@@ -17,12 +17,19 @@ AudioFileLib {
     }
 
     initWithPath {|path|
+        var pn = PathName(path);
         library = ();
-        this.populateLibrary(PathName(path));
+        libraryWithFileNames = ();
+        if(pn.folders.isEmpty) {
+            this.populateLibrary(pn);
+        } {
+            this.populateLibraryRecursively(pn);
+        }
     }
 
     initWithFile {|path|
         library = ();
+        libraryWithFileNames = ();
         this.load(path);
     }
 
@@ -32,6 +39,7 @@ AudioFileLib {
             "Could not load library".throw;
         };
         library = lib;
+        // TODO: recreate libraryWithFileNames
         "Loaded library.".postln;
     }
 
@@ -44,28 +52,49 @@ AudioFileLib {
         "Saved library to %\n.".postf(path);
     }
 
-    populateLibrary {|pn, parentPath|
-        var result, ext;
-        var validExtension = "wav, aiff";
+    populateLibraryRecursively {|pn, parentPath|
         pn.folders.do {|folder|
             var key = folder.folderName.asSymbol;
             if(parentPath.notNil) {
                 key = (parentPath +/+ key).asSymbol;
             };
             library.put(key, List[]);
-            // add any valid audio files to the path entry
-            folder.files.do {|f|
-                ext    = f.extension;
-                result = validExtension.containsi(ext);
-                // check if file is valid
-                if(result) {
-                    library[key].add(SoundFile(f.absolutePath));
-                }
-            };
+            libraryWithFileNames.put(key, ());
+            // add valid audio files to the library
+            folder.files.do {|f| this.validateFile(f, key) };
             // traverse all sub-folders
             if(folder.folders.isEmpty.not) {
-                this.populateLibrary(folder, folder.folderName);
+                this.populateLibraryRecursively(folder, folder.folderName);
             }
+        };
+        library.sort; // sort alphabetically
+    }
+
+    populateLibrary {|pn|
+        var key = pn.fileName;
+        library.put(key, List[]);
+        libraryWithFileNames.put(key, ());
+        // add valid audio files to the library
+        pn.files.do {|f|
+            this.validateFile(f, key);
+        };
+        library.sort; // sort alphabetically
+    }
+
+    validateFile {|f, key|
+        var ext, result, sf;
+        var validExtensions = "AIFF, AIFC, RIFF, WAVEX, WAVE, WAV, Sun, 
+        IRCAM, NeXT, raw, MAT4, MAT5, PAF, SVX, NIST, VOC, W64, PVF, 
+        XI, HTK, SDS, AVR, SD2, FLAC, vorbis, CAF, RF64";
+        ext    = f.extension;
+        result = validExtensions.containsi(ext);
+        if(result) {
+            sf = SoundFile(f.absolutePath);
+            library[key].add(sf);
+            libraryWithFileNames[key].put(
+                f.fileNameWithoutExtension.asSymbol,
+                sf
+            );
         }
     }
 
