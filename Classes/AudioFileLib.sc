@@ -71,7 +71,7 @@ AudioFileLib {
     }
 
     populateLibrary {|pn|
-        var key = pn.fileName;
+        var key = pn.fileName.asSymbol;
         library.put(key, List[]);
         libraryWithFileNames.put(key, ());
         // add valid audio files to the library
