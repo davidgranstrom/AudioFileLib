@@ -23,6 +23,7 @@ AudioFileLib {
         if(pn.folders.isEmpty) {
             this.populateLibrary(pn);
         } {
+            this.populateLibrary(pn);
             this.populateLibraryRecursively(pn);
         }
     }
@@ -61,7 +62,9 @@ AudioFileLib {
             library.put(key, List[]);
             libraryWithFileNames.put(key, ());
             // add valid audio files to the library
-            folder.files.do {|f| this.validateFile(f, key) };
+            folder.files.do {|f| 
+                this.validateFile(f, key) 
+            };
             // traverse all sub-folders
             if(folder.folders.isEmpty.not) {
                 this.populateLibraryRecursively(folder, folder.folderName);
