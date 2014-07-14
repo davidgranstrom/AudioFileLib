@@ -110,6 +110,24 @@ AudioFileLib {
         }
     }
 
+    libraryWithBuffers {|withFileNames=false|
+        var lib;
+        if(withFileNames.not) {
+            lib = library.copy;
+        } {
+            lib = libraryWithFileNames.copy;
+        };
+        ^lib.keysValuesChange {|key, val|
+            val.collect {|sf|  
+                if(sf.openRead) {
+                    sf.asBuffer;
+                } {
+                    "Could not open SoundFile".throw;
+                }
+            };
+        }
+    }
+
     find {|str|
         ^this.files.collect {|sf|
             var path = PathName(sf.path);
