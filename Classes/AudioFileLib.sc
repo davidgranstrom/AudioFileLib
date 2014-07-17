@@ -1,7 +1,7 @@
 // =============================================================================
 // Title         : AudioFileLib
 // Description   : Store and load audio file libraries from disk.
-// Copyright (c) : David Granstrom 2014 
+// Copyright (c) : David Granstrom 2014
 // =============================================================================
 
 AudioFileLib {
@@ -43,7 +43,7 @@ AudioFileLib {
 
     save {|path|
         var stamp = "audiofilelib_" ++ Date.getDate.stamp;
-        path = path ?? { Platform.userAppSupportDir +/+ stamp }; 
+        path = path ?? { Platform.userAppSupportDir +/+ stamp };
         try { library.writeArchive(path) } {
             "Could not write file to %.\nCheck your disk permissions.".format(path).throw;
         };
@@ -123,7 +123,7 @@ AudioFileLib {
             lib = libraryWithFileNames.copy;
         };
         ^lib.keysValuesChange {|key, val|
-            val.collect {|sf|  
+            val.collect {|sf|
                 if(sf.openRead) {
                     sf.asBuffer;
                 } {
@@ -136,13 +136,13 @@ AudioFileLib {
     find {|str|
         ^this.files.collect {|sf|
             var path = PathName(sf.path);
-            if(path.fileName.containsi(str)) { sf }  
+            if(path.fileName.containsi(str)) { sf }
         }.reject {|x| x.isNil };
     }
 
     print {
         if(library.isEmpty.not) {
-            library.keysValuesDo {|key, val| 
+            library.keysValuesDo {|key, val|
                 Post << key << "\n" << "\n";
                 val.do {|x|
                     Post << "\t" << "File name   : " << PathName(x.path).fileName << "\n"
