@@ -17,15 +17,12 @@ AudioFileLib {
     }
 
     initWithPath {|path|
-        var pn = PathName(path);
         library = ();
         libraryWithFileNames = ();
-        if(pn.folders.isEmpty) {
-            this.populateLibrary(pn);
-        } {
-            this.populateLibrary(pn);
-            this.populateLibraryRecursively(pn);
-        }
+        if(path.last == $/) {
+            path = path.drop(-1);
+        };
+        this.populateLibrary(PathName(path));
     }
 
     initWithFile {|path|
@@ -53,35 +50,40 @@ AudioFileLib {
         "Saved library to %\n.".postf(path);
     }
 
-    populateLibraryRecursively {|pn, parentPath|
-        pn.folders.do {|folder|
-            var key = folder.folderName.asSymbol;
-            if(parentPath.notNil) {
-                key = (parentPath +/+ key).asSymbol;
-            };
+    populateLibrary {|pn|
+        var key, traverseSubdir;
+        traverseSubdir = {|pn, parentPath|
+            var key = pn.folderName;
+            key = (parentPath.asString +/+ key).asSymbol;
             library.put(key, List[]);
             libraryWithFileNames.put(key, ());
-            // add valid audio files to the library
-            folder.files.do {|f| 
-                this.validateFile(f, key) 
+            pn.files.do {|f|
+                this.validateFile(f, key)
             };
-            // traverse all sub-folders
-            if(folder.folders.isEmpty.not) {
-                this.populateLibraryRecursively(folder, folder.folderName);
+            if(pn.folders.isEmpty.not) {
+                pn.folders.do {|p|
+                    traverseSubdir.(p, key)
+                };
             }
         };
-        library.sort; // sort alphabetically
-    }
-
-    populateLibrary {|pn|
-        var key = pn.fileName.asSymbol;
+        // start with top-level dir
+        key = pn.fileName.asSymbol;
         library.put(key, List[]);
         libraryWithFileNames.put(key, ());
-        // add valid audio files to the library
-        pn.files.do {|f|
-            this.validateFile(f, key);
+        pn.entries.do {|f|
+            if(f.isFolder.not) {
+                this.validateFile(f, key);
+            } {
+                traverseSubdir.(f, key);
+            }
         };
-        library.sort; // sort alphabetically
+        // get rid of empty entries
+        library.keys.do {|k|
+            if(library[k].isEmpty) {
+                library.removeAt(k);
+                libraryWithFileNames.removeAt(k);
+            }
+        }
     }
 
     validateFile {|f, key|
