@@ -12,9 +12,54 @@ AudioFileData {
         this.open;
     }
 
+    getRandomChunk1 {|duration, offset=0, numChannels, fadeTime=0|
+        this.open;
+        ^this.getChunk1(duration, rrand(0, sf.duration - duration), numChannels, fadeTime);
+    }
+
     getRandomChunk {|duration, offset=0, numChannels, fadeTime=0|
         this.open;
         ^this.getChunk(duration, rrand(offset, sf.duration), numChannels, fadeTime);
+    }
+
+    getChunk1 {|duration, offset=0, numChannels, fadeTime=0|
+        var buf, end, len;
+        var rawData, rawData1, tmpPath, tmpSf;
+        var framesToRead, framesToIndex, channelsToRead, offsetToRead, offsetToIndex;
+        this.open;
+        // read number of channels from file if not told otherwise
+        numChannels    = numChannels ? sf.numChannels;
+        channelsToRead = numChannels.collect{|x| x };
+        // convert duration to frames
+        framesToRead   = (duration * sf.sampleRate * numChannels).floor.asInt;
+        framesToIndex  = (duration * sf.sampleRate * sf.numChannels).floor.asInt;
+        offsetToRead   = (offset * sf.sampleRate * numChannels).floor.asInt;
+        offsetToIndex  = (offset * sf.sampleRate * sf.numChannels).floor.asInt;
+        // calculate positions
+        end = offsetToIndex + framesToIndex;
+        len = sf.numFrames * sf.numChannels;
+        channelsToRead = numChannels.collect{|x| x };
+        if(framesToIndex > len) {
+            buf = Buffer.readChannel(server, sf.path, 0, -1, channels:channelsToRead);
+        } {
+            // valid duration
+            buf = Buffer.readChannel(server, sf.path, offsetToRead, framesToRead, channels:channelsToRead);
+        };
+        server.sync;
+        if(fadeTime > 0 ) {
+            if(fadeTime <= ((buf.numFrames*buf.numChannels)/buf.sampleRate)) {
+                buf.loadToFloatArray(action:{|a| 
+                    rawData = this.applyWindow(a, fadeTime, sf.sampleRate, numChannels) 
+                });
+                server.sync;
+                buf.free;
+                buf = Buffer.loadCollectionWithSampleRate(server, rawData, numChannels, sf.sampleRate);
+            } {
+                "'fadeTime' needs to be less than or equal to chunk duration. No window was applied.".warn;
+            }
+        };
+        this.close;
+        ^buf;
     }
 
     getChunk {|duration, offset=0, numChannels, fadeTime=0|
